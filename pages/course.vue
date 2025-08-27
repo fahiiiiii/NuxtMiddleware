@@ -5,8 +5,8 @@
 </template>
 
 <script setup>
-definePageMeta({
-    middleware:['admin']
-})
+// definePageMeta({
+//     middleware:['admin']
+// })
 </script>
 

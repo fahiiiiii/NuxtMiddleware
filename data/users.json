@@ -115,5 +115,14 @@
     "role": "Student",
     "loginTime": "2025-08-26T08:45:27.917Z",
     "createdAt": "2025-08-26T08:45:27.926Z"
+  },
+  {
+    "id": 1756201813716.6282,
+    "name": "op",
+    "email": "rwag@ed.dc",
+    "password": "vsdwrv",
+    "role": "Security Guard",
+    "loginTime": "2025-08-26T09:50:13.703Z",
+    "createdAt": "2025-08-26T09:50:13.716Z"
   }
 ]

@@ -1,252 +1,261 @@
 <!-- pages/login.vue -->
 <template>
-  <v-container fluid class="fill-height pa-0">
-    <v-row no-gutters class="fill-height">
-      <!-- Right Side - Login Form -->
-      <v-col cols="12" md="5">
-        <div
-          class="d-flex flex-column justify-center align-center fill-height pa-8"
-          style="min-height: 100vh"
+  <div>
+    <v-card
+      class="mx-auto pa-12 pb-8"
+      elevation="8"
+      max-width="448"
+      rounded="lg"
+    >
+      <div class="text-subtitle-1 text-medium-emphasis">Account</div>
+      <v-text-field
+        v-model="formData.email"
+        density="compact"
+        placeholder="Email address"
+        prepend-inner-icon="mdi-email-outline"
+        variant="outlined"
+        :rules="emailRules"
+      ></v-text-field>
+      
+      <div class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between">
+        Password
+        <a
+          class="text-caption text-decoration-none text-blue"
+          href="#"
+          rel="noopener noreferrer"
+          target="_blank"
         >
-          <v-card class="w-100 pa-8 elevation-8" max-width="480" rounded="xl">
-            <!-- Header -->
-            <div class="text-center mb-8">
-              <h2 class="text-h4 font-weight-bold text-primary mb-2">Login</h2>
-              <p class="text-body-1 text-grey-darken-1">
-                Enter your credentials to continue
-              </p>
-            </div>
-
-            <v-form ref="form" v-model="valid" @submit.prevent="handleLogin">
-              <!-- Name Field -->
-              <v-text-field
-                v-model="formData.name"
-                label="Full Name"
-                :rules="nameRules"
-                variant="outlined"
-                prepend-inner-icon="mdi-account"
-                class="mb-4"
-                color="primary"
-                required
-                clearable
-              />
-
-              <!-- Email Field -->
-              <v-text-field
-                v-model="formData.email"
-                label="Email Address"
-                :rules="emailRules"
-                variant="outlined"
-                prepend-inner-icon="mdi-email"
-                type="email"
-                class="mb-4"
-                color="primary"
-                required
-                clearable
-              />
-
-              <!-- Password Field -->
-              <v-text-field
-                v-model="formData.password"
-                label="Password"
-                :rules="passwordRules"
-                variant="outlined"
-                prepend-inner-icon="mdi-lock"
-                :type="showPassword ? 'text' : 'password'"
-                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                @click:append-inner="showPassword = !showPassword"
-                class="mb-4"
-                color="primary"
-                required
-                clearable
-              />
-
-              <!-- Role Selection -->
-              <v-select
-                v-model="formData.role"
-                label="Select Your Role"
-                :items="roleItems"
-                :rules="roleRules"
-                variant="outlined"
-                prepend-inner-icon="mdi-account-group"
-                class="mb-6"
-                color="primary"
-                required
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item
-                    v-bind="props"
-                    :prepend-icon="getRoleIcon(item.raw.value)"
-                    :title="item.raw.title"
-                  />
-                </template>
-              </v-select>
-
-              <!-- Submit Button -->
-              <v-btn
-                type="submit"
-                color="primary"
-                size="large"
-                block
-                class="mb-4 text-none font-weight-bold"
-                :loading="loading"
-                :disabled="!valid"
-                elevation="2"
-                rounded="lg"
-              >
-                <v-icon start>mdi-login</v-icon>
-                Sign In
-              </v-btn>
-
-              <!-- Additional Info -->
-              <div class="text-center mt-4">
-                <v-chip size="small" color="success" variant="outlined">
-                  <v-icon start size="16">mdi-shield-check</v-icon>
-                  Secure Login
-                </v-chip>
-              </div>
-            </v-form>
-          </v-card>
-
-          <!-- Alert -->
-          <v-alert
-            v-if="alert.show"
-            :type="alert.type"
-            :text="alert.message"
-            class="mt-4 w-100"
-            max-width="480"
-            closable
-            @click:close="alert.show = false"
-            elevation="2"
-            rounded="lg"
-          />
-        </div>
-      </v-col>
-    </v-row>
-  </v-container>
+          Forgot login password?
+        </a>
+      </div>
+      
+      <v-text-field
+        v-model="formData.password"
+        :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+        :type="visible ? 'text' : 'password'"
+        density="compact"
+        placeholder="Enter your password"
+        prepend-inner-icon="mdi-lock-outline"
+        variant="outlined"
+        :rules="passwordRules"
+        @click:append-inner="visible = !visible"
+      ></v-text-field>
+      
+      <!-- Pass selectedRoles as prop and listen for updates -->
+      <LoginCheckbox 
+        :selected-roles="formData.roles"
+        @update:selected-roles="handleRoleUpdate"
+      />
+      
+      <v-card
+        class="mb-12"
+        color="surface-variant"
+        variant="tonal"
+      >
+        <v-card-text class="text-medium-emphasis text-caption">
+          Warning: After 3 consecutive failed login attempts, your account will be temporarily locked for three hours. If you must login now, you can also click "Forgot login password?" below to reset the login password.
+        </v-card-text>
+      </v-card>
+      
+      <v-btn
+        class="mb-8"
+        color="blue"
+        size="large"
+        variant="tonal"
+        block
+        :loading="isLoading"
+        @click="handleLogin"
+      >
+        Log In
+      </v-btn>
+      
+      <!-- Debug info (remove in production) -->
+      <v-card v-if="showDebug" class="mt-4" variant="outlined">
+        <v-card-title>Debug Info</v-card-title>
+        <v-card-text>
+          <pre>{{ JSON.stringify(formData, null, 2) }}</pre>
+        </v-card-text>
+      </v-card>
+      
+    </v-card>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive } from 'vue'
 
-// Page meta
-definePageMeta({
-  title: "Login",
-  layout: false,
-});
-
-// Reactive data
-const form = ref(null);
-const valid = ref(false);
-const loading = ref(false);
-const showPassword = ref(false);
-
+// Form data structure
 const formData = reactive({
-  name: "",
-  email: "",
-  password: "",
-  role: "",
-});
+  email: '',
+  password: '',
+  roles: {
+    admin: false,
+    student: true, // default selection
+    teacher: false,
+    securityGuard: false
+  }
+})
 
-const alert = reactive({
-  show: false,
-  type: "success",
-  message: "",
-});
-
-// Role options
-const roleItems = [
-  { title: "🎓 Student", value: "Student" },
-  { title: "👨‍🏫 Teacher", value: "Teacher" },
-  { title: "👨‍💼 Admin", value: "Admin" },
-  { title: "🛡️ Security Guard", value: "Security Guard" },
-];
-
-// Get role icon
-const getRoleIcon = (role) => {
-  const icons = {
-    Student: "mdi-school",
-    Teacher: "mdi-account-tie",
-    Admin: "mdi-shield-crown",
-    "Security Guard": "mdi-security",
-  };
-  return icons[role] || "mdi-account";
-};
+// UI state
+const visible = ref(false)
+const isLoading = ref(false)
+const showDebug = ref(process.dev) // Only show in development
 
 // Validation rules
-const nameRules = [
-  (v) => !!v || "Name is required",
-  (v) => (v && v.length >= 2) || "Name must be at least 2 characters",
-];
-
 const emailRules = [
-  (v) => !!v || "Email is required",
-  (v) => /.+@.+\..+/.test(v) || "Enter a valid email address",
-];
+  v => !!v || 'Email is required',
+  v => /.+@.+\..+/.test(v) || 'Email must be valid'
+]
 
 const passwordRules = [
-  (v) => !!v || "Password is required",
-  (v) => (v && v.length >= 6) || "Password must be at least 6 characters",
-];
+  v => !!v || 'Password is required',
+  v => v.length >= 6 || 'Password must be at least 6 characters'
+]
 
-const roleRules = [(v) => !!v || "Please select your role"];
+// Handle role updates from LoginCheckbox component
+const handleRoleUpdate = (updatedRoles) => {
+  formData.roles = updatedRoles
+}
 
-// Show alert
-const showAlert = (type, message) => {
-  alert.type = type;
-  alert.message = message;
-  alert.show = true;
-};
-
-// Handle login
-const handleLogin = async () => {
-  if (!valid.value) return;
-
-  loading.value = true;
-
-  try {
-    // Call the API endpoint
-    const data = await $fetch('/api/login', {
-      method: 'POST',
-      body: {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        loginTime: new Date().toISOString(),
-      }
-    });
-
-    // Store user data in localStorage
-    localStorage.setItem('userId', data.user.id);
-
-    // Show success message
-    showAlert("success", `Welcome ${formData.name}! Login data saved successfully.`);
-    navigateTo("/");
-
-    // Reset form after success
-    setTimeout(() => {
-      form.value?.reset();
-      Object.assign(formData, {
-        name: "",
-        email: "",
-        password: "",
-        role: "",
-      });
-    }, 2000);
-  } catch (error) {
-    console.error('Login error:', error);
-    
-    if (error.statusCode === 400) {
-      showAlert("error", error.statusMessage || "Please fill in all required fields.");
-    } else if (error.statusCode === 500) {
-      showAlert("error", "Server error occurred. Please try again later.");
-    } else {
-      showAlert("error", "Login failed. Please try again.");
-    }
-  } finally {
-    loading.value = false;
+// Cookie management functions
+const setUserCookie = (userData) => {
+  const cookie = useCookie('user-session', {
+    default: () => ({}),
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  })
+  
+  cookie.value = {
+    email: userData.email,
+    roles: userData.roles,
+    loginTime: new Date().toISOString(),
+    isAuthenticated: true
   }
-};
+}
 
+const setRoleCookie = (roles) => {
+  const roleCookie = useCookie('user-roles', {
+    default: () => ({}),
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  })
+  
+  roleCookie.value = roles
+}
+
+// Get selected role for easier access
+const getSelectedRole = () => {
+  return Object.keys(formData.roles).find(role => formData.roles[role]) || 'student'
+}
+
+// Login handler
+const handleLogin = async () => {
+  try {
+    isLoading.value = true
+    
+    // Validate form
+    if (!formData.email || !formData.password) {
+      throw new Error('Please fill in all required fields')
+    }
+    
+    // Check if at least one role is selected
+    const hasSelectedRole = Object.values(formData.roles).some(selected => selected)
+    if (!hasSelectedRole) {
+      throw new Error('Please select at least one role')
+    }
+    
+    // Here you would typically make an API call to authenticate
+    // For now, we'll simulate a successful login
+    const loginData = {
+      email: formData.email,
+      roles: formData.roles,
+      selectedRole: getSelectedRole()
+    }
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Store in cookies
+    setUserCookie(loginData)
+    setRoleCookie(formData.roles)
+    
+    // Additional tracking cookie for analytics
+    const trackingCookie = useCookie('user-tracking', {
+      default: () => ({}),
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    })
+    
+    trackingCookie.value = {
+      userId: generateUserId(formData.email),
+      lastLogin: new Date().toISOString(),
+      loginCount: (trackingCookie.value.loginCount || 0) + 1,
+      primaryRole: getSelectedRole()
+    }
+    
+    // Show success message (you can use a toast library here)
+    console.log('Login successful!', loginData)
+    
+    // Redirect based on selected role
+    await navigateBasedOnRole(getSelectedRole())
+    
+  } catch (error) {
+    console.error('Login failed:', error.message)
+    // Handle error (show toast, etc.)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Generate a simple user ID based on email
+const generateUserId = (email) => {
+  return btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12)
+}
+
+// Navigate based on selected role
+const navigateBasedOnRole = async (role) => {
+  const roleRoutes = {
+    admin: '/',
+    teacher: '/',
+    student: '/',
+    securityGuard: '/'
+  }
+  
+  const route = roleRoutes[role] || '/'
+  await navigateTo(route)
+}
+
+// Function to retrieve user data from cookies (utility function)
+const getUserFromCookies = () => {
+  const userCookie = useCookie('user-session')
+  const roleCookie = useCookie('user-roles')
+  const trackingCookie = useCookie('user-tracking')
+  
+  return {
+    user: userCookie.value,
+    roles: roleCookie.value,
+    tracking: trackingCookie.value
+  }
+}
+
+// Function to clear all cookies (for logout)
+const clearUserCookies = () => {
+  const userCookie = useCookie('user-session')
+  const roleCookie = useCookie('user-roles')
+  const trackingCookie = useCookie('user-tracking')
+  
+  userCookie.value = null
+  roleCookie.value = null
+  trackingCookie.value = null
+}
+
+// Expose utility functions globally if needed
+provide('userUtils', {
+  getUserFromCookies,
+  clearUserCookies,
+  getSelectedRole
+})
 </script>
