@@ -14,11 +14,8 @@
 
 <script setup>
 // Clear all cookies on component mount
-const userCookie = useCookie('user-session')
-const roleCookie = useCookie('user-roles')
-const trackingCookie = useCookie('user-tracking')
+const userCookie = useCookie('userData')
 
 userCookie.value = null
-roleCookie.value = null
-trackingCookie.value = null
+
 </script>

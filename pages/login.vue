@@ -70,12 +70,12 @@
       </v-btn>
       
       <!-- Debug info (remove in production) -->
-      <v-card v-if="showDebug" class="mt-4" variant="outlined">
+      <!-- <v-card v-if="showDebug" class="mt-4" variant="outlined">
         <v-card-title>Debug Info</v-card-title>
         <v-card-text>
           <pre>{{ JSON.stringify(formData, null, 2) }}</pre>
         </v-card-text>
-      </v-card>
+      </v-card> -->
       
     </v-card>
   </div>
@@ -117,45 +117,12 @@ const handleRoleUpdate = (updatedRoles) => {
   formData.roles = updatedRoles
 }
 
-// Cookie management functions
-const setUserCookie = (userData) => {
-  const cookie = useCookie('user-session', {
-    default: () => ({}),
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
-  })
-  
-  cookie.value = {
-    email: userData.email,
-    roles: userData.roles,
-    loginTime: new Date().toISOString(),
-    isAuthenticated: true
-  }
-}
-
-const setRoleCookie = (roles) => {
-  const roleCookie = useCookie('user-roles', {
-    default: () => ({}),
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
-  })
-  
-  roleCookie.value = roles
-}
-
-// Get selected role for easier access
-const getSelectedRole = () => {
-  return Object.keys(formData.roles).find(role => formData.roles[role]) || 'student'
-}
-
-// Login handler
+// Login handler - simply save formData to cookies
 const handleLogin = async () => {
   try {
     isLoading.value = true
     
-    // Validate form
+    // Basic validation
     if (!formData.email || !formData.password) {
       throw new Error('Please fill in all required fields')
     }
@@ -166,96 +133,26 @@ const handleLogin = async () => {
       throw new Error('Please select at least one role')
     }
     
-    // Here you would typically make an API call to authenticate
-    // For now, we'll simulate a successful login
-    const loginData = {
-      email: formData.email,
-      roles: formData.roles,
-      selectedRole: getSelectedRole()
-    }
-    
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Store in cookies
-    setUserCookie(loginData)
-    setRoleCookie(formData.roles)
-    
-    // Additional tracking cookie for analytics
-    const trackingCookie = useCookie('user-tracking', {
+    // Simply save the entire formData to cookies
+    const userCookie = useCookie('userData', {
       default: () => ({}),
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     })
     
-    trackingCookie.value = {
-      userId: generateUserId(formData.email),
-      lastLogin: new Date().toISOString(),
-      loginCount: (trackingCookie.value.loginCount || 0) + 1,
-      primaryRole: getSelectedRole()
-    }
+    userCookie.value = formData
     
-    // Show success message (you can use a toast library here)
-    console.log('Login successful!', loginData)
+    console.log('Login successful! FormData saved to cookies:', formData)
     
-    // Redirect based on selected role
-    await navigateBasedOnRole(getSelectedRole())
+    // Redirect to dashboard
+    await navigateTo('/')
     
   } catch (error) {
     console.error('Login failed:', error.message)
-    // Handle error (show toast, etc.)
   } finally {
     isLoading.value = false
   }
 }
-
-// Generate a simple user ID based on email
-const generateUserId = (email) => {
-  return btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12)
-}
-
-// Navigate based on selected role
-const navigateBasedOnRole = async (role) => {
-  const roleRoutes = {
-    admin: '/',
-    teacher: '/',
-    student: '/',
-    securityGuard: '/'
-  }
-  
-  const route = roleRoutes[role] || '/'
-  await navigateTo(route)
-}
-
-// Function to retrieve user data from cookies (utility function)
-const getUserFromCookies = () => {
-  const userCookie = useCookie('user-session')
-  const roleCookie = useCookie('user-roles')
-  const trackingCookie = useCookie('user-tracking')
-  
-  return {
-    user: userCookie.value,
-    roles: roleCookie.value,
-    tracking: trackingCookie.value
-  }
-}
-
-// Function to clear all cookies (for logout)
-const clearUserCookies = () => {
-  const userCookie = useCookie('user-session')
-  const roleCookie = useCookie('user-roles')
-  const trackingCookie = useCookie('user-tracking')
-  
-  userCookie.value = null
-  roleCookie.value = null
-  trackingCookie.value = null
-}
-
-// Expose utility functions globally if needed
-provide('userUtils', {
-  getUserFromCookies,
-  clearUserCookies,
-  getSelectedRole
-})
 </script>
